@@ -1,0 +1,36 @@
+------------------------------------------------
+| products table                               |
+------------------------------------------------
+| id | product_name | sales_price | regular_price     |
+------------------------------------------------
+
+-----------------------
+| categories table    |
+-----------------------
+| id | categories         |
+-----------------------
+
+----------------------------------
+| product_category table         |
+----------------------------------
+| id | prudct_id | category_id   |
+----------------------------------
+
+
+Insert Query in your Pivot Model product_category
+
+ public function products() {
+        return $this->belongsToMany('App\products', 'product_categories', 'category_id', 'product_id');
+    }
+
+
+This use in you Controller
+public function trycode(){
+    $category_id = 7;
+        $data = \DB::select('SELECT *
+         FROM `products` INNER JOIN `product_categories` 
+         ON `product_categories`.`category_id` = ? 
+         WHERE `product_categories`.`product_id` = `products`.`id`', [$category_id]);
+        print_r($data);
+		
+		}

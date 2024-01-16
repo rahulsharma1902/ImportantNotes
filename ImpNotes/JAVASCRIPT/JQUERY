@@ -1,0 +1,12 @@
+set variable in url and get url from eul in java script and jquery.js
+
+1. //way to set varibale in url
+window.location.replace("/login?roomid=" + roomname);
+
+
+2.// way to get variable from url 
+ $(document).ready(function(){
+    const roomId = new URLSearchParams(window.location.search).get('roomid');
+    console.log(roomId);
+    document.getElementById('roomIdInput').value = roomId;
+  });

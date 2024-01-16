@@ -1,0 +1,80 @@
+<!-- get image -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropbox API Integration</title>
+
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+    <!-- Include Bootstrap JS (Popper.js and Bootstrap JS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Include Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Include Dropbox SDK -->
+    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row" id="imageContainer"></div>
+    </div>
+
+    <script>
+        async function getImagesFromDropboxFolder() {
+            const client = new Dropbox.Dropbox({
+                accessToken: 'sl.Bs8DtOvaxZ6YF67LA4c2uvDZM449CXlrv2mP3ziA1A9gEKZNMn74X80bV6nOnlHuMypycLDKiS-Om6VhR23e7ixlrtDLmO0NwKSsU2GM1hIJVXqzeS4zU9v7wxkDjyfm-LLbDxyKykfnezc'
+            });
+
+            const folderPath = '/Apps/pro-graphx.com';
+
+            try {
+                const fileList = await client.filesListFolder({ path: folderPath });
+
+                if (fileList.result.entries && fileList.result.entries.length > 0) {
+                    const imageContainer = document.getElementById('imageContainer');
+
+                    // Loop through all files in the folder
+                    fileList.result.entries.forEach(async file => {
+                        // console.warn(file);
+
+                        // Check if the file has a supported image extension
+                        if (['.png', '.jpg', '.jpeg'].some(ext => file.name.toLowerCase().endsWith(ext))) {
+                            const temporaryLink = await client.filesGetTemporaryLink({ path: file.path_display });
+
+                            // Create a <div> with Bootstrap column classes for each image
+                            const colDiv = document.createElement('div');
+                            colDiv.classList.add('col-lg-4', 'mb-3');
+
+                            // Create an <img> tag for each image
+                            const imgTag = document.createElement('img');
+                            imgTag.src = temporaryLink.result.link;
+                            imgTag.alt = file.name;
+                            imgTag.classList.add('img-fluid');
+
+                            // Append the <img> tag to the <div>
+                            colDiv.appendChild(imgTag);
+
+                            // Append the <div> to the container
+                            imageContainer.appendChild(colDiv);
+                        }
+                    });
+                } else {
+                    console.log('No files found in the folder.');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        getImagesFromDropboxFolder();
+    </script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+# WHEN USER IS LOGIN SHOW LOGOUT ON NAV-BAR AND WHEN USER IS LOGOUT SHOW LOGIN AND REGISTER #
+
+
+/** First componet is `App.js` */
+
+    import React, { useState } from 'react';
+    import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+    import Navbar from './Component/Navbar';
+    import Home from './Component/Home';
+    import Login from './Component/Login';
+    import Register from './Component/Register';
+    import Logout from './Component/Logout';
+    
+    function App() {
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+    
+      const handleLogin = () => {
+        setIsLoggedIn(true);
+      };
+    
+      const handleLogout = () => {
+        setIsLoggedIn(false);
+      };
+    
+      return (
+        <Router>
+          <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} />
+          <Switch>
+            <Route exact path="/" component={Home} />
+            <Route path="/login" render={() => <Login handleLogin={handleLogin} />} />
+            <Route path="/register" component={Register} />
+            <Route path="/logout" render={() => <Logout handleLogout={handleLogout} />} />
+          </Switch>
+        </Router>
+      );
+    }
+    
+    export default App;
+
+
+
+
+/**  Here Component is `Navbar.js` => */
+
+    import React from 'react';
+    import { Link } from 'react-router-dom';
+    
+    function Navbar(props) {
+        return (
+            <nav className='navbar navbar-expand-lg navbar-light bg-dark'>
+                {/* <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom"> */}
+                    <a href="/" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-decoration-none text-light">
+                        Logo
+                    </a>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li><Link className='nav-link text-light' to="/">Home</Link></li>
+    
+                    </ul>
+    
+                    <div class="">
+                        {props.isLoggedIn ?
+                            <>
+                                <Link to="/logout" onClick={props.handleLogout}> <button type="button" class="btn btn-outline-primary me-2">Logout</button></Link>
+                            </> :
+                            <>
+                                <Link className='text-decoration-none text-light' style={{ marginRight: '1rem' }} to="/login">Login</Link>
+                                <Link className='text-decoration-none text-light mr-3' to="/register">Sign-up</Link>
+                            </>
+                        }
+                    </div>
+                    </div>
+                {/* </header> */}
+            </nav>
+        );
+    }
+    
+    export default Navbar;
+
+
+
+
+/**  NOW YOUR NEXT COMPONENT IS `Login.js` => */
+
+    import React from 'react';
+    import { useHistory } from 'react-router-dom';
+    function Login(props) {
+      const history = useHistory();
+    
+      const handleSubmit = (event) => {
+        event.preventDefault();
+        props.handleLogin();
+        history.push('/');
+    
+      };
+    
+      return (
+        <div>
+          <h2>Login</h2>
+          <form onSubmit={handleSubmit}>
+            <label>
+              Email:
+              <input type="email"  />
+            </label>
+            <label>
+              Password:
+              <input type="password"  />
+            </label>
+            <button type="submit">Login</button>
+          </form>
+        </div>
+      );
+    }
+    
+    export default Login;
+
+
+
+/**  NEXT COMPONENT IS `Logout.js` => */
+
+    import React from 'react';
+    import { useHistory } from 'react-router-dom';
+    
+    function Logout(props) {
+      const history = useHistory();
+    
+      const handleLogout = () => {
+        localStorage.clear();
+        localStorage.removeItem("user");
+        props.handleLogout();
+        history.push('/login');
+      };
+    // alert('Logout');
+      return (
+        <div>
+          <h2>Logout</h2>
+          <p>Are you sure you want to log out?</p>
+          <button onClick={handleLogout}>Yes</button>
+          <button onClick={() => history.goBack()}>No</button>
+        </div>
+      );
+    }
+    
+    export default Logout;
+
+
+
+/** NEXT COMPONENT IS  `Register.js` */
+
+    import React from 'react';
+    
+    function Register(props) {
+      const handleSubmit = (event) => {
+        event.preventDefault();
+        const name = event.target.name.value;
+        const email = event.target.email.value;
+        const password = event.target.password.value;
+        props.handleRegister(name, email, password);
+      };
+    
+      return (
+        <div>
+          <h2>Register</h2>
+          <form onSubmit={handleSubmit}>
+            <div>
+              <label>Name:</label>
+              <input type="text" name="name" required />
+            </div>
+            <div>
+              <label>Email:</label>
+              <input type="email" name="email" required />
+            </div>
+            <div>
+              <label>Password:</label>
+              <input type="password" name="password" required />
+            </div>
+            <button type="submit">Register</button>
+          </form>
+        </div>
+      );
+    }
+    
+    export default Register;

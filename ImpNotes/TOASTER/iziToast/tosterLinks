@@ -1,0 +1,32 @@
+<!-- Toaster -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
+<!-- end toaster -->
+
+
+<!-- How to use  -->
+<script>
+iziToast.success({
+    // title: 'DONE',
+    message: response.success,
+    position: 'topRight' // Set the position to top right
+});
+</script>
+
+
+@if(Session::get('error'))
+<script>
+    iziToast.success({
+        message: "{{ Session::get('error') }}",
+        position: 'topRight' 
+    });
+    </script>
+@endif
+@if(Session::get('success'))
+<script>
+      iziToast.success({
+        message: "{{ Session::get('success') }}",
+        position: 'topRight' 
+    });
+</script>
+@endif

@@ -1,0 +1,19 @@
+// this is the way  to get public ip using api 
+$ip_address = file_get_contents('https://api.ipify.org');
+
+
+
+// How to get time zone using public ip address
+<?php
+$ip_address = file_get_contents('https://api.ipify.org');
+// $ip_address = $_SERVER['REMOTE_ADDR'];
+$url = "https://freegeoip.app/json/{$ip_address}";
+$data = file_get_contents($url);
+// print_r($data);
+if ($data) {
+    $location = json_decode($data);
+    $timezone = $location->time_zone;
+    echo $timezone;
+}
+
+?>

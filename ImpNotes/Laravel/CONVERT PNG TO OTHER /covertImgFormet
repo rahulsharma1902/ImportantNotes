@@ -1,0 +1,180 @@
+<?php
+use Illuminate\Support\Facades\File;
+use Intervention\Image\ImageManagerStatic as Image;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Imagecow\Image as ImageCow;
+use Spatie\ImageOptimizer\OptimizerChainFactory;
+
+use Imagick;
+use Intervention\Image\Facades\Image as Img;
+
+
+
+// sudo apt-get install php8.2-imagick
+// sudo apt-get install ghostscript
+// sudo apt-get install texlive-font-utils
+
+
+
+// composer require intervention/image
+
+// composer require dompdf/dompdf
+
+// composer require spatie/image-optimizer imagecow/imagecow
+
+
+
+
+public function save(Request $request)
+{
+    // Check if the request has a file named 'featured_img'
+    if ($request->hasFile('featured_img')) {
+        $file = $request->file('featured_img');
+        $extension = $file->getClientOriginalExtension();
+        $name = 'product_' . rand(0, 1000) . '_' . time();
+        $folderPath = public_path('Test') . '/' . $name;
+        $imageName = $name;
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0777, true);
+        }
+
+        if (strtolower($extension) === 'eps' ||strtolower($extension) === 'ai') {
+            // Convert EPS to PDF using epstopdf
+            $pdfFilePath = $folderPath . '/' . $name . '.pdf';
+           $test = exec("epstopdf {$file->getPathname()} --outfile=$pdfFilePath");
+            // print_r($pdfFilePath);
+            // Check if PDF conversion is successful
+            if (file_exists($pdfFilePath)) {
+                exec("pdftoppm $pdfFilePath $folderPath/" . $name . " -png");
+
+                unlink($pdfFilePath);
+                // echo '<pre>';
+                // print_r($request->all());
+                // die();
+            } else {
+                echo 'Error converting EPS to PDF';
+            }
+            $imageName = pathinfo($pdfFilePath, PATHINFO_FILENAME).'-1';
+            // echo $imageName.'-1';
+        }
+        else {
+            // Save the original image
+            $file->move($folderPath, $name . '.' . $extension);
+            // Convert the original image to PNG
+            $this->convertAndSave($folderPath . '/' . $name . '.' . $extension, 'png');
+           
+        }
+        $pngImagePath = public_path('Test') . '/' . $name .'/'.$imageName. '.png';
+
+        // // Convert the PNG image to JPG
+        $this->convertAndSave($pngImagePath, 'jpg');
+        $this->convertAndSave($pngImagePath, 'jpeg');
+
+        // $this->convertToAll($pngImagePath, 'jpg');
+        // $this->convertToAll($pngImagePath, 'jpeg');
+        $this->convertToPsdAndTif($pngImagePath, 'psd');
+        $this->convertToPsdAndTif($pngImagePath, 'tif');
+        $this->convertToPdf($pngImagePath, 'pdf');
+        $this->convertToPsdAndTif($pngImagePath, 'pnm');
+        $pnmImagePath = public_path('Test') . '/' . $name .'/'.$imageName. '.pnm';
+        $this->convertToSvg($pnmImagePath, 'svg');
+
+        echo '<pre>';
+        print_r($request->all());
+        die();
+    } else {
+        echo 'No file provided';
+    }
+}
+
+
+public function convertAndSave($inputPath, $outputExtension)
+
+{
+
+    try {
+        $image = Image::make($inputPath);
+        $outputPath = pathinfo($inputPath, PATHINFO_DIRNAME) . '/' . pathinfo($inputPath, PATHINFO_FILENAME) . '.' . $outputExtension;
+        $image->save($outputPath);
+    } catch (\Exception $e) {
+        // Handle any exceptions (e.g., if the file is not a valid image)
+        echo 'Error converting to ' . $outputExtension . ': ' . $e->getMessage();
+    }
+}
+
+public function convertToPsdAndTif($inputPath, $outputExtension)
+{
+    try {
+        $optimizerChain = OptimizerChainFactory::create();
+        $optimizerChain->optimize($inputPath, $inputPath);
+    
+        $image = ImageCow::fromFile($inputPath);
+        $outputPath = pathinfo($inputPath, PATHINFO_DIRNAME) . '/' . pathinfo($inputPath, PATHINFO_FILENAME) . '.' . $outputExtension;
+        $image->save($outputPath);
+    } catch (\Exception $e) {
+        // Handle any exceptions
+        echo 'Error converting to '.$outputExtension.': ' . $e->getMessage();
+    }
+}
+public function convertToPdf($inputImagePath, $outputExtension)
+{
+    try {
+        // Create a new Dompdf instance
+        $dompdf = new Dompdf();
+
+        // Load the image into Dompdf
+        $imageContents = file_get_contents($inputImagePath);
+        $dompdf->loadHtml('<img src="data:image/jpeg;base64,' . base64_encode($imageContents) . '" />');
+
+        // Set options
+        $options = new Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $dompdf->setOptions($options);
+
+        // Set paper size (optional)
+        $dompdf->setPaper('A1', 'portrait');
+
+        // Render the PDF (output as stream)
+        $dompdf->render();
+
+        // Save the PDF file
+        $outputPdfPath = pathinfo($inputImagePath, PATHINFO_DIRNAME) . '/' . pathinfo($inputImagePath, PATHINFO_FILENAME) . '.' . $outputExtension;
+        file_put_contents($outputPdfPath, $dompdf->output());
+
+    } catch (\Exception $e) {
+        // Handle any exceptions
+        echo 'Error converting to PDF: ' . $e->getMessage();
+    }
+}
+
+public function convertToSvg($inputImagePath, $outputExtension)
+{
+    try {
+        // Set the output SVG path
+        $outputSvgPath = pathinfo($inputImagePath, PATHINFO_DIRNAME) . '/' . pathinfo($inputImagePath, PATHINFO_FILENAME) . '.' . $outputExtension;
+
+        // Convert input image to a supported format (e.g., PNG)
+        $convertedImagePath = pathinfo($inputImagePath, PATHINFO_DIRNAME) . '/' . pathinfo($inputImagePath, PATHINFO_FILENAME) . '.pnm';
+        $convertCommand = "convert {$inputImagePath} {$convertedImagePath}";
+        exec($convertCommand);
+
+        // Use Potrace to convert the image to SVG
+        $potraceCommand = "potrace --svg {$convertedImagePath} -o {$outputSvgPath}";
+        exec($potraceCommand, $output, $returnVar);
+
+        // Clean up: remove the temporary converted image
+        unlink($convertedImagePath);
+
+        // Print the output for debugging
+        echo 'Command output: ' . implode("\n", $output) . "\n";
+
+        if ($returnVar === 0) {
+            echo 'Conversion to SVG successful';
+        } else {
+            echo 'Error converting to SVG. Command output: ' . implode("\n", $output);
+        }
+    } catch (\Exception $e) {
+        echo 'Error: ' . $e->getMessage();
+    }
+}

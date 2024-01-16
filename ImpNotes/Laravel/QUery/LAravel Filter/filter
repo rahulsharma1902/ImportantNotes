@@ -1,0 +1,74 @@
+ $query = Publication::with('article_type', 'region');
+        // Filter by region
+        $regionId = $request->input('region_id');
+            if ($regionId !== null) {
+              
+                $query->whereHas('region', function ($regionQuery) use ($regionId) {
+                    $regionQuery->whereIn('id', $regionId);
+                });
+            }
+        // Filter by publication name
+        $publicationName = $request->input('publicationname');
+        if ($publicationName !== null) {
+            $query->where('title', 'like', $publicationName . '%');
+        }
+
+        if ($request->genre_id !== null) {
+            $genre_id = $request->genre_id;
+            $query->where(function ($query) use ($genre_id) {
+                foreach ($genre_id as $gid) {
+                    $query->orWhereJsonContains('genre', $gid);
+                }
+            });
+        }
+      // This code only get those gernre where Id exist in same column
+        //                         // $genreId = $request->input('genre_id');
+        //                         // if ($genreId !== null) {
+        //                         //     $genreIds = $request->input('genre_id');
+        //                         //     foreach ($genreIds as $genreI_d) {
+        //                         //         $query->where(function ($query) use ($genreI_d) {
+        //                         //             $query->whereJsonContains('genre', $genreI_d);
+        //                         //         });
+        //                         //     }
+        //                         // }
+
+        // Filter by price range
+        $minPrice = preg_replace('/[^a-zA-Z0-9_ %\[\]\.\(\)%&-]/s', '', $request->input('minp'));
+  
+        $maxPrice = preg_replace('/[^a-zA-Z0-9_ %\[\]\.\(\)%&-]/s', '', $request->input('maxp'));
+    
+        if ($minPrice !== null && $maxPrice !== null) {
+            $query->whereBetween('price', [$minPrice, $maxPrice]);
+        } elseif ($minPrice !== null) {
+            $query->where('price', '>=', $minPrice);
+        } elseif ($maxPrice !== null) {
+            $query->where('price', '<=', $maxPrice);
+        }
+
+        // Sort by price
+        $sortedVal = $request->input('sortedval');
+        if ($sortedVal === 'dsc') {
+            $query->orderBy('price', 'desc');
+        } elseif ($sortedVal === 'asc') {
+            $query->orderBy('price', 'asc');
+        } elseif ($sortedVal === 'tatasc'){
+            $query->orderBy('tat', 'asc');
+
+        }elseif ($sortedVal === 'tatdsc'){
+            $query->orderBy('tat', 'desc');
+
+        }elseif ($sortedVal === 'daasc'){
+            $query->orderBy('domain_authority', 'asc');
+
+        }elseif ($sortedVal === 'dadsc'){
+            $query->orderBy('domain_authority', 'desc');
+
+        }
+        // New query for find sponsor yes no or descrit
+        $sponsorVal = $request->input('sponsor');
+        if ($sponsorVal != null) {
+            $query->where('sponsored', $sponsorVal);
+        } 
+
+        $results = $query->get();
+        return response()->json($results);

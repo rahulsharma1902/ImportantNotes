@@ -1,0 +1,8 @@
+
+// How show the error message when You sending response to react js 
+$error = [
+            'message' => 'Invalid username or password',
+            'errors' => [
+                'user' => ['Invalid username or Email'],
+            ]
+        ];

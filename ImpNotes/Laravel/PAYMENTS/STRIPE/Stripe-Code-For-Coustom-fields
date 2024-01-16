@@ -1,0 +1,183 @@
+<div class="input-group d-flex">
+<label class="form-label w-50">Card number</label><label class="form-label w-50 text-right">Powered by
+  <a href="#"> Stripe</a></label>
+<div id="cc-number"></div>
+</div>
+<div class="row">
+<div class="col-md-6">
+  <div class="input-group">
+    <label class="form-label">MM/AA</label>
+    <div id="cc-expiry"></div>
+  </div>
+</div>
+<div class="col-md-6">
+  <div class="input-group">
+    <label class="form-label">CVV</label>
+    <div id="cc-cvc"></div>
+  </div>
+</div>
+</div> 
+ 
+ 
+ 
+ 
+ 
+ // Dont forget to Change stripe api key
+ <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+  <title>Lawkit | Crear cuenta</title>
+
+ <script type="text/javascript">
+    var stripe = Stripe('pk_test_51N5MbaSIRfv8P9JxGuCtqVMrF5jXs2UPsT4TiUjMxnvgrHLv74N6rPwBXEt2RawZKm8nZSNjb8E5JpjW9fiJ3Wqt00m4MB5eWg');
+   var elements = stripe.elements();
+var style = {
+  base: {
+    border: '1px solid #E8E8E8',
+    iconColor: '#c4f0ff',
+    color: '#31325F',
+    fontWeight: 400,
+    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+    fontSize: '16px',
+    fontSmoothing: 'antialiased',
+
+    '::placeholder': {
+      color: '#CFD7E0',
+    },
+    ':-webkit-autofill': {
+      color: '#fce883',
+    },
+    ':focus': {
+      color: '#31325F',
+    },
+  },
+  invalid: {
+    iconColor: '#FFC7EE',
+    color: '#FFC7EE',
+  },
+};
+
+var cardNumber = elements.create('cardNumber', {
+  style: style,
+  classes: {
+    base: 'form-control w-full',
+    complete: 'is-valid',
+    empty: 'is-empty',
+    invalid: 'is-invalid',
+  },
+});
+
+var cardExpiry = elements.create('cardExpiry', {
+  style: style,
+  classes: {
+    base: 'form-control',
+    complete: 'is-valid',
+    empty: 'is-empty',
+    invalid: 'is-invalid',
+  },
+});
+
+var cardCvc = elements.create('cardCvc', {
+  style: style,
+  classes: {
+    base: 'form-control',
+    complete: 'is-valid',
+    empty: 'is-empty',
+    invalid: 'is-invalid',
+  },
+});
+
+cardNumber.mount('#cc-number');
+cardExpiry.mount('#cc-expiry');
+cardCvc.mount('#cc-cvc');
+
+    // Card mount done here
+
+    $("#customSwitch1").on("change", function (event) {
+      if (event.target.checked) {
+        $('.lawkit-btn').removeClass('disabled').removeAttr("disabled")
+      } else {
+        $(".lawkit-btn").addClass("disabled").attr('disabled', true);
+      }
+    })
+
+    var form = document.getElementById('signup-form');
+    $('.lawkit-btn').click(function () {
+      console.log('try to submit form...... ');
+      var btn = $(this)
+      console.log(btn);
+      btn.addClass("disabled").attr('disabled', true).html('...');
+      if ($('#fusername').val().length <= 0) {
+        Swal.fire({
+          type: 'error',
+          title: `oops...`,
+          text: 'Debes ingresar un nombre de usuario'
+        })
+        btn.removeClass("disabled").removeAttr('disabled').html('Crear cuenta');
+        return false;
+      }
+      if ($('#lusername').val().length <= 0) {
+        Swal.fire({
+          type: 'error',
+          title: `oops...`,
+          text: 'Debes ingresar apellidos'
+        })
+        btn.removeClass("disabled").removeAttr('disabled').html('Crear cuenta');
+        return false;
+      }
+      if ($('#email').val().length <= 0) {
+        Swal.fire({
+          type: 'error',
+          title: `oops...`,
+          text: 'El campo de correo electrónico es obligatorio'
+        })
+        btn.removeClass("disabled").removeAttr('disabled').html('Crear cuenta');
+        return false;
+      }
+      if ($('#password_confirm').val() != $('#password').val()) {
+        Swal.fire({
+          type: 'error',
+          title: `oops...`,
+          text: 'Las contraseñas ingresadas no coinciden'
+        })
+        btn.removeClass("disabled").removeAttr('disabled').html('Crear cuenta');
+        return false;
+      }
+
+
+      // Start creating payment token
+      stripe.createPaymentMethod({
+        type: 'card',
+        card: cardNumber,
+        billing_details: {
+          name: $('#fusername').val() + ' ' + $('#lusername').val(),
+        },
+      }).then(function (result) {
+        if (result.error) {
+          // Display error.message in your UI
+          btn.removeClass("disabled").removeAttr('disabled').html('Crear cuenta');
+          Swal.fire({
+            type: 'error',
+            title: `oops...`,
+            text: result.error.message
+          })
+        } else {
+          stripe.createToken(cardNumber).then(function (res) {
+            if (res.error) {
+              btn.removeClass("disabled").removeAttr('disabled').html('Crear cuenta');
+              Swal.fire({
+                type: 'error',
+                title: `oops...`,
+                text: result.error.message
+              })
+            } else {
+              $('#payment_method_id').val(result.paymentMethod.id);
+              $('#card_token').val(res.token.id);
+              $('#signup-form').submit();
+              // console.log(res.token.id);
+              // console.log(result.paymentMethod.id);
+            }
+          });
+        }
+      });
+    });
+
+  </script>

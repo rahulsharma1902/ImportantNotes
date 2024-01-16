@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropbox API Integration</title>
+
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+    <!-- Include Bootstrap JS (Popper.js and Bootstrap JS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Include Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- Include Dropbox SDK -->
+    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
+</head>
+<body>
+    <a href="https://www.dropbox.com/oauth2/authorize?client_id=xc40crkgso1w6am&response_type=code&token_access_type=offline">ACces</a>
+    <!-- <a href="https://www.dropbox.com/oauth2/authorize?client_id=jgi6vhka1z5ikqn&redirect_uri=https://pro-graphx.com/vehicle-wraps/&response_type=code&token_access_type=offline">ACces</a> -->
+    <p>file:///home/sagmetic/test.html</p>
+    <div class="container">
+        <div class="row" id="imageGalleryContainer"></div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Check for the 'code' parameter in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeParam = urlParams.get('code');
+
+            if (!codeParam) {
+                // 'code' parameter not present, redirect to Dropbox authorization URL
+                window.location.href = 'https://www.dropbox.com/oauth2/authorize?' +
+                    'client_id=jgi6vhka1z5ikqn' +
+                    '&redirect_uri=https://pro-graphx.com/vehicle-wraps/' +
+                    '&response_type=code' +
+                    '&access_token_type=offline';
+            } else {
+                // 'code' parameter present, you can handle it or perform additional actions
+                console.log('Authorization code:', codeParam);
+            }
+        const clientId = 'jgi6vhka1z5ikqn';
+        const clientSecret = 'uv543erigcg1l2m';
+        const redirectUri = 'https://pro-graphx.com/vehicle-wraps/';
+        const authorizationCode = codeParam;  // Replace with the actual authorization code
+
+        // Function to exchange authorization code for access token
+        async function getAccessToken() {
+            try {
+                const response = await axios.post('https://api.dropboxapi.com/oauth2/token', null, {
+                    params: {
+                        code: authorizationCode,
+                        grant_type: 'authorization_code',
+                        client_id: clientId,
+                        client_secret: clientSecret,
+                        redirect_uri: redirectUri,
+                    },
+                });
+
+                return response.data.access_token;
+            } catch (error) {
+                console.error('Error getting access token:', error.message);
+                window.location.href = 'https://www.dropbox.com/oauth2/authorize?' +
+                    'client_id=jgi6vhka1z5ikqn' +
+                    '&redirect_uri=https://pro-graphx.com/vehicle-wraps/' +
+                    '&response_type=code' +
+                    '&access_token_type=offline';
+                return null;
+            }
+        }
+
+
+        async function getImagesFromDropboxFolder() {
+            const accessToken = await getAccessToken();
+            console.log(accessToken);
+            const client = new Dropbox.Dropbox({
+                accessToken: accessToken
+            });
+
+            const folderPath = '/Apps/pro-graphx.com';
+
+            try {
+                const fileList = await client.filesListFolder({ path: folderPath });
+
+                if (fileList.result.entries && fileList.result.entries.length > 0) {
+                    const imageContainer = document.getElementById('imageGalleryContainer');
+
+                    // Loop through all files in the folder
+                    fileList.result.entries.forEach(async file => {
+                        // console.warn(file);
+
+                        // Check if the file has a supported image extension
+                        if (['.png', '.jpg', '.jpeg'].some(ext => file.name.toLowerCase().endsWith(ext))) {
+                            const temporaryLink = await client.filesGetTemporaryLink({ path: file.path_display });
+                            console.log(temporaryLink);
+                            // Create a <div> with Bootstrap column classes for each image
+                            const colDiv = document.createElement('div');
+                            colDiv.classList.add('col-lg-4', 'mb-3');
+
+                            // Create an <img> tag for each image
+                            const imgTag = document.createElement('img');
+                            imgTag.src = temporaryLink.result.link;
+                            imgTag.alt = file.name;
+                            imgTag.classList.add('img-fluid');
+
+                            // Append the <img> tag to the <div>
+                            colDiv.appendChild(imgTag);
+
+                            // Append the <div> to the container
+                            imageContainer.appendChild(colDiv);
+                        }
+                    });
+                } else {
+                    console.log('No files found in the folder.');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        getImagesFromDropboxFolder();
+    });
+    </script>
+</body>
+</html>

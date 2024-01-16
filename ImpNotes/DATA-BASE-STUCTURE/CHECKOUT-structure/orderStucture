@@ -1,0 +1,30 @@
+**Order**
+1. id
+2. order_num
+3. product_id
+4. product_quantity
+4. user_id
+5. product_price
+6. total_price
+7. status
+
+
+**Address**
+1. id
+2. order_num
+3. street
+3. postal_code
+4. city
+5. state
+6. country
+7. status
+
+**Payment**
+1. id
+2. order_num
+3. payment_intent
+4. stripe_customer_id
+5. total_amount
+5. payment_ammount
+6. discount
+7. status

@@ -1,0 +1,29 @@
+Relation in  Larvale Tabels
+
+	1. Has one 	=hasOne
+	
+			has one get only one first data 
+			
+			
+			=>in Model 
+				public function student_profile(){
+						return $this->hasOne(student_profile::class,'user_id', 'id');
+					}
+					
+					user_id is firegen key jo dusre table mai hoge   
+					id local key it means jo modal hai uske id 
+					
+			=> in Controller
+				$student_profile = User::find(2)->student_profile;
+			
+	2. Has many = hasMany
+
+			has many is use for get multiple data
+			
+			=> in Model
+				   public function followers(){
+					return $this->hasMany(add_friend::class,'user_id', 'id');
+				}
+				
+			=>in Controller
+				$followers = User::find(2)->followers;
